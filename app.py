@@ -13,6 +13,9 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Load model globally to prevent reloading on every request
+model = load_model("audio.h5", compile=False)
+
 def extract_features(file_path):
     y, sr = librosa.load(file_path, sr=None)
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
@@ -36,9 +39,6 @@ def predict():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
     
-    # Load model only when needed to save memory
-    model = load_model("audio.h5")  
-
     features = extract_features(file_path)
     prediction = model.predict(features).flatten()[0]  
     result = {"prediction": "Deepfake" if prediction >= 0.5 else "Real"}
