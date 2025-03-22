@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Voice Detector</title>
+</head>
+<body>
+    <h2>Upload an Audio File</h2>
+    <input type="file" id="audioFile">
+    <button id="uploadBtn">Upload & Predict</button>
+
+    <h3>Response:</h3>
+    <p id="output"></p>
+    <h3>Error:</h3>
+    <p id="error" style="color: red;"></p>
+
+    <script>
+        document.getElementById("uploadBtn").addEventListener("click", async function(event) {
+            event.preventDefault(); // Prevents auto-refresh
+
+            const fileInput = document.getElementById("audioFile");
+            const outputElement = document.getElementById("output");
+            const errorElement = document.getElementById("error");
+
+            outputElement.innerText = ""; // Clear previous output
+            errorElement.innerText = ""; // Clear previous error
+
+            if (!fileInput.files.length) {
+                errorElement.innerText = "⚠️ Please select a file first!";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                console.log("🚀 Sending file to server...");
+
+                const response = await fetch("http://127.0.0.1:5000/predict", {
+                    method: "POST",
+                    body: formData
+                });
+
+                console.log("📡 Response received:", response);
+
+                if (!response.ok) {
+                    throw new Error(`Server Error (${response.status})`);
+                }
+
+                const data = await response.json();
+                console.log("✅ Prediction Data:", data);
+                outputElement.innerText = "Prediction: " + data.prediction;
+            } catch (error) {
+                console.error("❌ Error:", error);
+                errorElement.innerText = "❌ Error: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
