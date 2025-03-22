@@ -1,24 +1,18 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import CORS
+from flask_cors import CORS  
 import numpy as np
 import librosa
 import os
 from werkzeug.utils import secure_filename
-from tensorflow.keras.models import load_model  # Correct way to load H5 model
+from tensorflow.keras.models import load_model  
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)  # Enable CORS
 
-# Load the saved model (ensure the correct path)
-MODEL_PATH = "audio.h5"
-model = load_model(MODEL_PATH)  # Use TensorFlow/Keras to load the H5 file
-
-# Define an upload folder
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Function to extract features from audio
 def extract_features(file_path):
     y, sr = librosa.load(file_path, sr=None)
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
@@ -42,16 +36,15 @@ def predict():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
     
-    # Extract features and predict
+    # Load model only when needed to save memory
+    model = load_model("audio.h5")  
+
     features = extract_features(file_path)
-    prediction = model.predict(features).flatten()[0]  # Ensure a single scalar value
-    
+    prediction = model.predict(features).flatten()[0]  
     result = {"prediction": "Deepfake" if prediction >= 0.5 else "Real"}
-    print(result)  # Debugging output
+    
     return jsonify(result)
 
-import os
-
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # Use Render's assigned port
+    port = int(os.environ.get("PORT", 10000)) 
     app.run(host='0.0.0.0', port=port)
